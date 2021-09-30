@@ -1,0 +1,44 @@
+version: '3.4'
+
+services:
+    php:
+        build: ./docker/php
+        container_name: php
+        user: ${UID}:${UID}
+        volumes:
+            - ./app:/var/www:rw
+        depends_on:
+            - base
+    web:
+        build: ./docker/web
+        container_name: web
+        ports:
+            - "80:80"
+        volumes:
+            - ./app:/var/www:ro
+        depends_on:
+            - php
+    proxy:
+        # Don't use this proxy in prod
+        build: ./docker/proxy
+        container_name: proxy
+        ports:
+            - "443:443"
+        depends_on:
+            - web
+    base:
+        image: mariadb:latest
+        container_name: base
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+        volumes:
+            - /srv/mariadb:/var/lib/mysql
+        ports:
+            - "3306:3306"
+    admin_base:
+        image: phpmyadmin/phpmyadmin:latest
+        container_name: admin_base
+        ports:
+            - "8080:80"
+        depends_on:
+            - base
